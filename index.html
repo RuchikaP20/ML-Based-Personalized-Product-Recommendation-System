@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecommerce Recommendation System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<style>
+     body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .navbar {
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .video-background {
+            width: 100%;
+            height: 400px; /* Set the height of the video here */
+            object-fit: cover; /* Ensure the video covers the entire container */
+        }
+        .nav-link:hover {
+            color: orange !important; /* Change text color on hover */
+        }
+        .nav-link.btn {
+            border-radius: 5px; /* Add rounded corners to buttons */
+        }
+
+        .modal-content {
+            background-color: #fff; /* Set modal content background color */
+            color: #000; /* Set modal content text color */
+        }
+        .modal-content.dark {
+            background-color: #000; /* Set modal content background color for dark theme */
+            color: #fff; /* Set modal content text color for dark theme */
+        }
+                /* Chatbot Container */
+        #chatbot-container {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          z-index: 1000;
+        }
+
+        /* Chatbot Icon */
+        #chatbot-icon {
+          background-color: #007bff;
+          color: white;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          transition: transform 0.3s ease;
+        }
+
+        #chatbot-icon:hover {
+          transform: scale(1.1);
+        }
+
+        /* Chatbot Window */
+        #chatbot-window {
+          width: 300px;
+          height: 400px;
+          background-color: white;
+          border-radius: 10px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          display: none;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        #chatbot-header {
+          background-color: #007bff;
+          color: white;
+          padding: 10px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        #close-chatbot {
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
+        }
+
+        #chatbot-body {
+          flex: 1;
+          padding: 10px;
+          overflow-y: auto;
+          background-color: #f8f9fa;
+        }
+
+        #chatbot-messages {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .message {
+          padding: 8px 12px;
+          border-radius: 10px;
+          max-width: 80%;
+        }
+
+        .user-message {
+          background-color: #007bff;
+          color: white;
+          align-self: flex-end;
+        }
+
+        .bot-message {
+          background-color: #e9ecef;
+          color: black;
+          align-self: flex-start;
+        }
+
+        #chatbot-input-container {
+          display: flex;
+          padding: 10px;
+          background-color: white;
+          border-top: 1px solid #ddd;
+        }
+
+        #chatbot-input {
+          flex: 1;
+          padding: 8px;
+          border: 1px solid #ddd;
+          border-radius: 5px;
+          margin-right: 10px;
+        }
+
+        #chatbot-send {
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          padding: 8px 12px;
+          cursor: pointer;
+        }
+
+        #chatbot-send:hover {
+          background-color: #0056b3;
+        }
+      </style>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand mx-auto" href="#">Ecommerce Recommendation System</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link" href="#" id="settingsLink"><i class="fas fa-cog"></i> Settings</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link btn btn-outline-primary mr-2" href="#" data-toggle="modal" data-target="#signupModal">Sign Up</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link btn btn-primary" href="#" data-toggle="modal" data-target="#signinModal">Sign In</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+<!-- Video -->
+<div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
+  <div class="carousel-inner">
+    <div class="carousel-item active">
+      <video autoplay loop muted width="100%" height="auto">
+        <source src="{{ url_for('static', filename='videos/v.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    </div>
+  </div>
+</div>
+
+<!-- Go To Main Page Button -->
+<div class="text-center mt-5">
+  <a  href="main" class="btn btn-primary btn-lg">Go To Main Page</a>
+</div>
+
+{% if signup_message %}
+<h5 style="margin-left:42%;margin-top:10px; font-weight: bold;">{{signup_message}}</h5>
+{% endif %}
+
+<!--trending recommendations-->
+<!-- Products -->
+<div class="container mt-5">
+  <h2 class="text-center mb-4">Trending Products</h2>
+  <div class="row mt-4">
+    {% for index, product in trending_products.iterrows() %}
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+      <div class="card">
+          <img src="{{ random_product_image_urls[index] }}" class="card-img-top" alt="{{ product['Name'] }}" style="height: 200px;">
+        <div class="card-body">
+          <h5 class="card-title">{{ truncate(product['Name'],12) }}</h5>
+          <p class="card-text">Brand: {{ product['Brand'] }}</p>
+          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#productModal{{ index }}">Buy Now</button>
+        </div>
+      </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="productModal{{ index }}" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="productModalLabel">{{ product['Name'] }}</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4">
+                  <img src="{{ random_product_image_urls[index] }}" class="img-fluid" alt="{{ product['Name'] }}" style="height: 200px;">
+              </div>
+              <div class="col-md-8">
+                <p><strong>Brand:</strong> {{ product['Brand'] }}</p>
+                <!-- Add other product details here -->
+                <!-- Example: -->
+                <p><strong>Review Count:</strong> {{ product['ReviewCount'] }}</p>
+                <p><strong>Rating:</strong> {{ product['Rating'] }}</p>
+                <p><strong>Price:</strong> {{ random_price }}</p>
+                <!-- Add more details as needed -->
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+
+
+<!-- Bootstrap modal for sign up -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="signupModalLabel">Sign Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/signup" method="post">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Sign Up</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap modal for sign in -->
+<div class="modal fade" id="signinModal" tabindex="-1" aria-labelledby="signinModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="signinModalLabel">Sign In</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/signin" method="post">
+          <div class="mb-3">
+            <label for="signinUsername" class="form-label">Username</label>
+            <input type="text" class="form-control" id="signinUsername" name="signinUsername" required>
+          </div>
+          <div class="mb-3">
+            <label for="signinPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="signinPassword" name="signinPassword" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h5>Choose Theme:</h5>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="theme" id="defaultTheme" value="default" checked>
+          <label class="form-check-label" for="defaultTheme">
+            Default
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="theme" id="blackTheme" value="black">
+          <label class="form-check-label" for="blackTheme">
+            Black Theme
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="theme" id="greenTheme" value="green">
+          <label class="form-check-label" for="greenTheme">
+            Green Theme
+          </label>
+        </div>
+        <hr>
+        <h5>Zoom:</h5>
+        <button type="button" class="btn btn-primary mr-2" id="zoomIn">Zoom In</button>
+        <button type="button" class="btn btn-primary" id="zoomOut">Zoom Out</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="applyTheme">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- chatbot -->
+<!-- Chatbot Container -->
+<div id="chatbot-container">
+  <!-- Chatbot Icon -->
+  <div id="chatbot-icon" onclick="toggleChatbot()">
+    <i class="fas fa-robot"></i>
+  </div>
+
+  <!-- Chatbot Window -->
+  <div id="chatbot-window">
+    <div id="chatbot-header">
+      <h5>Chatbot Assistant</h5>
+      <button id="close-chatbot" onclick="closeChatbot()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div id="chatbot-body">
+      <div id="chatbot-messages"></div>
+    </div>
+    <div id="chatbot-input-container">
+      <input type="text" id="chatbot-input" placeholder="Type a message..." onkeypress="handleChatbotInput(event)">
+      <button id="chatbot-send" onclick="sendMessage()">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+  // Handle click on Settings link to open the modal
+  document.getElementById('settingsLink').addEventListener('click', function() {
+    $('#settingsModal').modal('show');
+  });
+
+  // Handle theme apply button click
+  document.getElementById('applyTheme').addEventListener('click', function() {
+    // Get the selected theme value
+    var selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+
+    // Apply the selected theme
+    if (selectedTheme === 'black') {
+      document.body.style.backgroundColor = 'black';
+      document.body.style.color = 'white';
+    } else if (selectedTheme === 'green') {
+      document.body.style.backgroundColor = 'green';
+      document.body.style.color = 'white';
+    } else {
+      // Default theme
+      document.body.style.backgroundColor = '#f8f9fa';
+      document.body.style.color = 'black';
+    }
+
+    // Close the modal
+    $('#settingsModal').modal('hide');
+  });
+
+  // Handle zoom in button click
+  document.getElementById('zoomIn').addEventListener('click', function() {
+    document.body.style.zoom = "115%";
+  });
+
+  // Handle zoom out button click
+  document.getElementById('zoomOut').addEventListener('click', function() {
+    document.body.style.zoom = "100%";
+  });
+</script>
+<script>
+// Chatbot Data
+let chatbotOpen = false;
+let chatHistory = [];
+
+// Toggle Chatbot Visibility
+function toggleChatbot() {
+  const chatbotWindow = document.getElementById("chatbot-window");
+  chatbotWindow.style.display = chatbotOpen ? "none" : "flex";
+  chatbotOpen = !chatbotOpen;
+
+  if (chatbotOpen) {
+    greetUser();
+  }
+}
+
+// Close Chatbot
+function closeChatbot() {
+  document.getElementById("chatbot-window").style.display = "none";
+  chatbotOpen = false;
+  clearChatHistory();
+}
+
+// Clear Chat History
+function clearChatHistory() {
+  chatHistory = [];
+  document.getElementById("chatbot-messages").innerHTML = "";
+}
+
+// Greet User
+function greetUser() {
+  const greetingMessage = "Hello! I'm your assistant. How can I help you today? 😊";
+  addBotMessage(greetingMessage);
+}
+
+// Add Bot Message
+function addBotMessage(message) {
+  const chatbotMessages = document.getElementById("chatbot-messages");
+  const messageElement = document.createElement("div");
+  messageElement.classList.add("message", "bot-message");
+  messageElement.textContent = message;
+  chatbotMessages.appendChild(messageElement);
+  chatbotMessages.scrollTop = chatbotMessages.scrollHeight; // Auto-scroll
+}
+
+// Add User Message
+function addUserMessage(message) {
+  const chatbotMessages = document.getElementById("chatbot-messages");
+  const messageElement = document.createElement("div");
+  messageElement.classList.add("message", "user-message");
+  messageElement.textContent = message;
+  chatbotMessages.appendChild(messageElement);
+  chatbotMessages.scrollTop = chatbotMessages.scrollHeight; // Auto-scroll
+}
+
+// Handle User Input
+function handleChatbotInput(event) {
+  if (event.key === "Enter") {
+    sendMessage();
+  }
+}
+
+// Send Message
+function sendMessage() {
+  const input = document.getElementById("chatbot-input");
+  const userMessage = input.value.trim();
+
+  if (userMessage) {
+    addUserMessage(userMessage);
+    input.value = ""; // Clear input field
+
+    // Check for keywords
+    if (
+      userMessage.toLowerCase().includes("product") ||
+      userMessage.toLowerCase().includes("recommend") ||
+      userMessage.toLowerCase().includes("suggest") ||
+      userMessage.toLowerCase().includes("show")
+    ) {
+      recommendProduct(); // Call the product recommendation function
+    } else {
+      addBotMessage("How can I assist you further?"); // Default response
+    }
+  }
+}
+// Recommend Product
+function recommendProduct() {
+  // Fetch trending products from the backend or use a predefined list
+  const trendingProducts = [
+    { name: "Product A", brand: "Brand X", price: "$50" },
+    { name: "Product B", brand: "Brand Y", price: "$70" },
+    { name: "Product C", brand: "Brand Z", price: "$90" },
+  ];
+
+  // Randomly select a product
+  const randomProduct = trendingProducts[Math.floor(Math.random() * trendingProducts.length)];
+  const productMessage = `Here's a product you might like: ${randomProduct.name} by ${randomProduct.brand} for ${randomProduct.price}.`;
+
+  // Display the product recommendation
+  addBotMessage(productMessage);
+
+  // Add options to continue or close the chat
+  const options = document.createElement("div");
+  options.innerHTML = `
+    <button onclick="addBotMessage('Great! Let me know if you need more help.')">Continue</button>
+    <button onclick="closeChatbot()">Close Chat</button>
+  `;
+  document.getElementById("chatbot-messages").appendChild(options);
+}
+</script>
+
+
+<!--footer-->
+<footer class="footer bg-dark text-white">
+    <div class="container" style="padding-top:20px;">
+        <div class="row">
+            <div class="col-md-3 col-sm-6">
+                <h5>About Us</h5>
+                <p>NIST UNIVERSITY <br> BATCH 2021 <br> FINAL YEAR PROJECT</p>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <h5>Support</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <h5>Contact Us</h5>
+                <address>
+                    <strong>Ecommerce SITE</strong><br>
+                    Bhubaneswar<br>
+                    India<br>
+                    <i class="fas fa-phone"></i> Phone: +1234567890<br>
+                    <i class="fas fa-envelope"></i> Email: info@example.com
+                </address>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <hr class="bg-light">
+                <p class="text-center">© 2024 Ecommerce Recommendation System. All Rights Reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+</body>
+</html>
